@@ -4,19 +4,11 @@ from bs4 import BeautifulSoup
 
 class Robot:
     base_url = 'https://simak.ipb.ac.id/'
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Mobile Safari/537.36',
-        'Content-Type': 'application/x-www-form-urlencoded',
-
-    }
 
     def __init__(self, username, password):
         ''' Inisiasi Robot penelusur '''
         self.username = username
         self.password = password
-        self.name = None
-        self.nim = None
-        self.departemen = None
         self.request = None
         self.response = None
         self.soup = None
@@ -31,25 +23,25 @@ class Robot:
             print(
                 f"Melakukan login ke alamat : {url}\ndengan data sebagai berikut: ")
             print(data)
-            with requests.Session() as sess:
-                cookies = {}
-                for cookie in self.response.cookies:
-                    cookies[cookie.name] = cookie.value
-                self.response = sess.post(url, data=data, cookies=cookies)
+            self._doRequest(url, method, data)
         else:
-            self.response = requests.get(url)
-        self.soup = BeautifulSoup(self.response.content, 'html.parser')
-        self.request = self.response.request
-        print(self.response.content)
+            self._doRequest(url, method)
 
-    def _doRequest(self, url, method):
+    def _doRequest(self, url='', method='GET', data={}):
         ''' Method untuk membuat request '''
         cookies = {}
         if self.response is not None:
-            with requests.Session() as sess:
-                for cookie in self.response.cookies:
-                    cookies[cookie.name] = cookie.value
-        self.response = sess.post(url, data=data, cookies=cookies)
+            for cookie in self.response.cookies:
+                cookies[cookie.name] = cookie.value
+
+        with requests.Session() as sess:
+            if method == 'POST':
+                self.response = sess.post(url, data=data, cookies=cookies)
+            else:
+                self.response = sess.get(url, cookies=cookies)
+
+        self.soup = BeautifulSoup(self.response.content, 'html.parser')
+        self.request = self.response.request
 
     def _constructLoginData(self):
         ''' Method untuk membangun data login '''
