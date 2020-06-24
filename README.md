@@ -1,2 +1,2 @@
-# simak-epbm
-simple simak auto epbm written in python
+# SIMAK EPBM
+Program ini dibuat agar memudahkan programer mengisi simak.
