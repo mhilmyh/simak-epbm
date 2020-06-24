@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup
 
 class Robot:
     base_url = 'https://simak.ipb.ac.id/'
+    authenticated = False
 
     def __init__(self, username, password):
         ''' Inisiasi Robot penelusur '''
@@ -19,31 +20,37 @@ class Robot:
         url = self.base_url + 'Account/Login'
         if method == 'POST':
             url += '?ReturnUrl=%2FHome'
-            data = self._constructLoginData()
-            print(
-                f"Melakukan login ke alamat : {url}\ndengan data sebagai berikut: ")
-            print(data)
-            self._doRequest(url, method, data)
+            data = self._construct_login_data()
+            self._do_request(url, method, data)
         else:
-            self._doRequest(url, method)
+            self._do_request(url, method)
 
-    def _doRequest(self, url='', method='GET', data={}):
+    def list_sidebar(self):
+        ''' Method melihat menu pada sidebar '''
+        if self.authenticated == False:
+            raise RuntimeError("\033[31mBzzz bzzz ! anda belum login\33[0m")
+
+    def _do_request(self, url='', method='GET', data={}):
         ''' Method untuk membuat request '''
         cookies = {}
         if self.response is not None:
             for cookie in self.response.cookies:
                 cookies[cookie.name] = cookie.value
 
+        print(f"Mencoba melakukan {method} ke alamat : {url}")
         with requests.Session() as sess:
             if method == 'POST':
                 self.response = sess.post(url, data=data, cookies=cookies)
+                if self.response.status_code == 200:
+                    print("\033[32mBeep boop ! berhasil login\33[0m")
+                    self.authenticated = True
             else:
                 self.response = sess.get(url, cookies=cookies)
 
         self.soup = BeautifulSoup(self.response.content, 'html.parser')
         self.request = self.response.request
 
-    def _constructLoginData(self):
+    def _construct_login_data(self):
         ''' Method untuk membangun data login '''
         if self.soup is not None:
             token_tag = self.soup.select(
@@ -62,4 +69,4 @@ class Robot:
 
         else:
             raise RuntimeError(
-                f'\033[31mBzzz bzzz ! hasil soup tidak ditemukan\33[0m')
+                '\033[31mBzzz bzzz ! hasil soup tidak ditemukan\33[0m')
