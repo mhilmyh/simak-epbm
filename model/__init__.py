@@ -10,9 +10,11 @@ class Robot:
         ''' Inisiasi Robot penelusur '''
         self.username = username
         self.password = password
+        self.list_matkul = {}
         self.request = None
         self.response = None
         self.url_found = {}
+        self.cookie_jar = {}
         self.soup = None
         print(f'\033[32mBeep boop ! robot untuk {username} siap\33[0m')
 
@@ -26,7 +28,7 @@ class Robot:
         else:
             self._do_request(login_url, method)
 
-    def list_sidebar(self):
+    def sidebar(self):
         ''' Method melihat menu pada sidebar '''
         if self.authenticated == False:
             raise RuntimeError('\033[31mBzzz bzzz ! anda belum login\33[0m')
@@ -42,39 +44,63 @@ class Robot:
     def goto_page(self, page_name='Beranda'):
         if not (page_name in self.url_found):
             raise ValueError(
-                '\033[31mBzzz bzzz ! nama halaman sepertinya salah\33[0m')
+                '\033[31mBzzz bzzz ! nama halaman sepertinya salah atau belum ditemukan\33[0m')
 
         if self.authenticated == False:
             raise RuntimeError('\033[31mBzzz bzzz ! anda belum login\33[0m')
 
-        print(f'Mencoba pindah ke {page_name} : {self.url_found[page_name]}')
         self._do_request(url=self.base_url + self.url_found[page_name])
+
+    def get_list_epbm(self):
+        if self.response.url == self.url_found.get('EPBM'):
+            raise ValueError(
+                '\033[31mBzzz bzzz ! anda tidak berapa di halaman EPBM\33[0m')
+
+        if self.authenticated == False:
+            raise RuntimeError('\033[31mBzzz bzzz ! anda belum login\33[0m')
+
+        tags = self.soup.select(
+            'div.box-body > div.row > div.col-md-6 > a')
+        print("Memberikan hasil matakuliah yang terdaftar :")
+        for tag in tags:
+            link = tag['href']
+            name = tag.select(
+                "div.panel > div.panel-heading > table > tr > td > table > tr > td > font")[0]
+            self.list_matkul[name] = link
+            print(f"{name.string}: {self.base_url + link}")
+
+        return self.list_matkul
+
+    def fill_epbm(self):
+        raise NotImplementedError('\033[31mBzzz bzzz ! belum di buat\33[0m')
 
     def _do_request(self, url='', method='GET', data={}):
         ''' Method untuk membuat request '''
-        cookies = {}
+        dont_print = False
         if self.response is not None:
             for cookie in self.response.cookies:
-                cookies[cookie.name] = cookie.value
+                self.cookie_jar[cookie.name] = cookie.value
 
         print(f'Mencoba melakukan {method} ke alamat : {url}')
         with requests.Session() as sess:
             if method == 'POST_LOGIN':
                 self.response = sess.post(
-                    url, data=data, cookies=cookies, allow_redirects=False)
+                    url, data=data, cookies=self.cookie_jar, allow_redirects=False)
                 if self.response.status_code == 302:
                     print('\033[32mBeep boop ! berhasil login\33[0m')
                     self.authenticated = True
+                    dont_print = True
                     self._do_request(self.base_url + '/Home')
                 else:
                     print('\033[31mBzzz bzzz ! sepertinya gagal login\33[0m')
             else:
-                self.response = sess.get(url, cookies=cookies)
+                self.response = sess.get(url, cookies=self.cookie_jar)
 
             self.soup = BeautifulSoup(self.response.content, 'html.parser')
             self.request = self.response.request
-        print(
-            f'\033[32mBeep boop ! sekarang anda berada di {self.response.url}\33[0m')
+        if not dont_print:
+            print(
+                f'\033[32mBeep boop ! sekarang anda berada di {self.response.url}\33[0m')
 
     def _construct_login_data(self):
         ''' Method untuk membangun data login '''
