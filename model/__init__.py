@@ -41,9 +41,11 @@ class Robot:
         with requests.Session() as sess:
             if method == 'POST':
                 self.response = sess.post(url, data=data, cookies=cookies)
-                if self.response.status_code == 200:
+                if self.response.status_code == 200 and self.response.url.count("/Home"):
                     print("\033[32mBeep boop ! berhasil login\33[0m")
                     self.authenticated = True
+                else:
+                    print("\033[31mBzzz bzzz ! sepertinya gagal login\33[0m")
             else:
                 self.response = sess.get(url, cookies=cookies)
 
