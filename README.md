@@ -20,8 +20,8 @@ Versi python yang digunakan `python 3.6.8`
 Ganti file `.env.backup` menjadi `.env` dan isi dengan username serta password akun IPB kalian :
 
 ```
-USERNAME=blablabla
-PASWOORD=blablabla
+USERNAME_IPB=blablabla
+PASSWORD_IPB=blablabla
 ```
 
 Buka terminal atau command line yang sudah terinstall python:
