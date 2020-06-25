@@ -9,7 +9,9 @@ def autoEPBM(username=None, password=None):
         robot.login(method='POST_LOGIN')
         robot.sidebar()
         robot.goto_page(page_name='EPBM')
-        robot.get_list_epbm()
+        for epbm in robot.get_list_epbm().keys():
+            robot.fill_epbm(epbm)
+
     else:
         raise ValueError('Cek kembali username dan password yang diberikan')
 

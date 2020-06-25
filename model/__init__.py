@@ -1,5 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
+from random import randint
 
 
 class Robot:
@@ -15,6 +16,10 @@ class Robot:
         self.response = None
         self.url_found = {}
         self.cookie_jar = {}
+        self.headers = requests.utils.default_headers()
+        self.headers.update({
+            'User-Agent': 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Mobile Safari/537.36',
+        })
         self.soup = None
         print(f'\033[32mBeep boop ! robot untuk {username} siap\33[0m')
 
@@ -36,12 +41,13 @@ class Robot:
         menu = self.soup.select('ul.sidebar-menu > li > a')
         print('Memberikan hasil pencarian menu sidebar: ')
         for element in menu:
-            self.url_found[element.contents[1].strip()] = element["href"]
+            self.url_found[element.contents[1].strip()] = element['href']
             print(
                 f'Halaman :{element.contents[1]} ({self.base_url+element["href"]})')
         return menu
 
     def goto_page(self, page_name='Beranda'):
+        ''' Method pindah halaman '''
         if not (page_name in self.url_found):
             raise ValueError(
                 '\033[31mBzzz bzzz ! nama halaman sepertinya salah atau belum ditemukan\33[0m')
@@ -52,6 +58,7 @@ class Robot:
         self._do_request(url=self.base_url + self.url_found[page_name])
 
     def get_list_epbm(self):
+        ''' Method melihat list epbm '''
         if self.response.url == self.url_found.get('EPBM'):
             raise ValueError(
                 '\033[31mBzzz bzzz ! anda tidak berapa di halaman EPBM\33[0m')
@@ -61,18 +68,38 @@ class Robot:
 
         tags = self.soup.select(
             'div.box-body > div.row > div.col-md-6 > a')
-        print("Memberikan hasil matakuliah yang terdaftar :")
+        print('Memberikan hasil matakuliah yang belum diisi EPBM nya :')
         for tag in tags:
             link = tag['href']
             name = tag.select(
-                "div.panel > div.panel-heading > table > tr > td > table > tr > td > font")[0]
-            self.list_matkul[name] = link
-            print(f"{name.string}: {self.base_url + link}")
+                'div.panel-danger > div.panel-heading > table > tr > td > table > tr > td > font')
+            self.list_matkul[name[0].string] = link
+            print(f'{name[0].string}: {self.base_url + link}')
 
         return self.list_matkul
 
-    def fill_epbm(self):
-        raise NotImplementedError('\033[31mBzzz bzzz ! belum di buat\33[0m')
+    def fill_epbm(self, kode_matkul=None):
+        ''' Method mengisi epbm '''
+        if kode_matkul is None:
+            raise ValueError('\033[31mBzzz bzzz ! kode matkul salah\33[0m')
+
+        if self.authenticated == False:
+            raise RuntimeError('\033[31mBzzz bzzz ! anda belum login\33[0m')
+
+        yakin = input(
+            f'\033[32mBeep boop ! apa anda yakin mengisi epbm {kode_matkul} ? (y/n) \33[0m')
+        if yakin == 'y':
+            self._do_request(self.base_url + self.list_matkul[kode_matkul])
+            data = self._construct_epbm_data()
+            print('Form yang akan dikirim : ', end='')
+            print(' | '.join(map(str, data.keys())))
+            self._do_request(
+                self.base_url + self.list_matkul[kode_matkul], method='POST_EPBM', data=data)
+        elif yakin == 'n':
+            print(f'\033[33mDrrt drrt ! batal mengisi {kode_matkul}\33[0m')
+        else:
+            raise ValueError(
+                '\033[31mBzzz bzzz ! tidak bisa memahami input\33[0m')
 
     def _do_request(self, url='', method='GET', data={}):
         ''' Method untuk membuat request '''
@@ -93,6 +120,13 @@ class Robot:
                     self._do_request(self.base_url + '/Home')
                 else:
                     print('\033[31mBzzz bzzz ! sepertinya gagal login\33[0m')
+            elif method == 'POST_EPBM':
+                self.response = sess.post(
+                    url, data=data, cookies=self.cookie_jar)
+                soup_tmp = BeautifulSoup(self.response.content, 'html.parser')
+                alert = soup_tmp.select_one('div.alert')
+                print(
+                    f'\033[33mDrrt drrt ! {str(alert.contents[-1]).strip()}\33[0m')
             else:
                 self.response = sess.get(url, cookies=self.cookie_jar)
 
@@ -122,3 +156,31 @@ class Robot:
         else:
             raise RuntimeError(
                 '\033[31mBzzz bzzz ! hasil soup tidak ditemukan\33[0m')
+
+    def _construct_epbm_data(self):
+        krsid = self.soup.select_one('input[name="KRSID"]')
+        hitung_p_mk = self.soup.select_one('input[name^="HitungPertanyaanMK"]')
+        hitung_p_dosen = self.soup.select(
+            'input[name^="HitungPertanyaanDosen"]')
+        jumlah_dosen = self.soup.select_one(
+            'input[name="HitungDosenRealisasi"]')
+        list_id_dosen = self.soup.select('input[name^="PengajarMKID"]')
+
+        data = {
+            krsid['name']: krsid['value'],
+            hitung_p_mk['name']: hitung_p_mk['value'],
+            jumlah_dosen['name']: jumlah_dosen['value'],
+            'Saran': '',
+            'Pernyataan': False,
+        }
+
+        for i in range(1, int(hitung_p_mk['value']) + 1):
+            data['Jawaban_' + str(i)] = randint(3, 5)
+
+        for i in range(int(jumlah_dosen['value'])):
+            data[list_id_dosen[i]['name']] = list_id_dosen[i]['value']
+            data[hitung_p_dosen[i]['name']] = hitung_p_dosen[i]['value']
+            for j in range(int(hitung_p_dosen[i]['value'])):
+                data['JawabanDosen_' + str(i + 1) + str(j + 1)] = randint(3, 5)
+
+        return data
