@@ -27,7 +27,6 @@ class Robot:
         ''' Method untuk request ke login page'''
         login_url = self.base_url + '/Account/Login'
         if method == 'POST_LOGIN':
-            # param = '?ReturnUrl=%2FHome'
             data = self._construct_login_data()
             self._do_request(login_url, method, data)
         else:
