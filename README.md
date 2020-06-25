@@ -14,3 +14,6 @@ Package yang harus ada :
 - BeutifulSoup
 
 Versi python yang digunakan `python 3.6.8`
+
+# TESTED
+![Gambar Testing](pict/tested.png)
