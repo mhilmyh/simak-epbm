@@ -5,15 +5,18 @@ import config
 def autoEPBM(username=None, password=None):
     if username is None and password is None:
         robot = Robot(config.USERNAME_IPB, config.PASSWORD_IPB)
-        robot.login()
-        robot.login(method='POST_LOGIN')
-        robot.sidebar()
-        robot.goto_page(page_name='EPBM')
-        for epbm in robot.get_list_epbm().keys():
-            robot.fill_epbm(epbm)
-
+    elif username is not None and password is not None:
+        robot = Robot(username, password)
     else:
-        raise ValueError('Cek kembali username dan password yang diberikan')
+        raise ValueError(
+            '\033[31mCek kembali username dan password yang diberikan')
+
+    robot.login()
+    robot.login(method='POST_LOGIN')
+    robot.sidebar()
+    robot.goto_page(page_name='EPBM')
+    for epbm in robot.get_list_epbm().keys():
+        robot.fill_epbm(epbm)
 
 
 if __name__ == '__main__':

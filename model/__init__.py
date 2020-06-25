@@ -73,9 +73,14 @@ class Robot:
             link = tag['href']
             name = tag.select(
                 'div.panel-danger > div.panel-heading > table > tr > td > table > tr > td > font')
-            self.list_matkul[name[0].string] = link
-            print(f'{name[0].string}: {self.base_url + link}')
+            if name:
+                print(name)
+                self.list_matkul[name[0].string] = link
+                print(f'{name[0].string}: {self.base_url + link}')
 
+        if not self.list_matkul:
+            print(
+                f'\033[33mDrrt drrt ! tidak bisa menemukan EPBM yang belum terisi\33[0m')
         return self.list_matkul
 
     def fill_epbm(self, kode_matkul=None):
@@ -167,20 +172,20 @@ class Robot:
         list_id_dosen = self.soup.select('input[name^="PengajarMKID"]')
 
         data = {
-            krsid['name']: krsid['value'],
-            hitung_p_mk['name']: hitung_p_mk['value'],
-            jumlah_dosen['name']: jumlah_dosen['value'],
-            'Saran': '',
-            'Pernyataan': False,
+            krsid['name']: krsid['value']
         }
 
         for i in range(1, int(hitung_p_mk['value']) + 1):
-            data['Jawaban_' + str(i)] = randint(3, 5)
+            data['Jawaban_' + str(i)] = randint(3, 4)
+        data[hitung_p_mk['name']] = hitung_p_mk['value']
 
         for i in range(int(jumlah_dosen['value'])):
             data[list_id_dosen[i]['name']] = list_id_dosen[i]['value']
-            data[hitung_p_dosen[i]['name']] = hitung_p_dosen[i]['value']
             for j in range(int(hitung_p_dosen[i]['value'])):
-                data['JawabanDosen_' + str(i + 1) + str(j + 1)] = randint(3, 5)
+                data['JawabanDosen_' + str(i + 1) + str(j + 1)] = randint(3, 4)
+            data[hitung_p_dosen[i]['name']] = hitung_p_dosen[i]['value']
+        data[jumlah_dosen['name']] = jumlah_dosen['value']
+        data['Saran'] = ''
+        data['Pernyataan'] = ['true', 'false']
 
         return data
