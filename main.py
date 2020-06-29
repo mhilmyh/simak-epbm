@@ -9,7 +9,7 @@ def autoEPBM(username=None, password=None):
         robot = Robot(username, password)
     else:
         raise ValueError(
-            '\033[31mCek kembali username dan password yang diberikan')
+            '\033[31mCek kembali username dan password yang diberikan\33[0m')
 
     robot.login()
     robot.login(method='POST_LOGIN')
