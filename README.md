@@ -43,6 +43,8 @@ Mencoba melakukan POST_LOGIN ke alamat : https://simak.ipb.ac.id/Account/Login
 
 ```
 
+# PENTING
+
 Saat program run dan mulai mengisi epbm, kalian harus menginput/mengetik 'y' untuk yes (mulai mengisi epbm tertentu)
 atau 'n' untuk no (membatalkan mengisi epbm tertentu).
 
