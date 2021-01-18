@@ -82,6 +82,11 @@ class Robot:
                 f'\033[33mDrrt drrt ! tidak bisa menemukan EPBM yang belum terisi\33[0m')
         return self.list_matkul
 
+    def find_and_click_epbm_button(self):
+        a = self.soup.select_one('a.btn.btn-primary')
+        url = self.base_url + a['href']
+        self._do_request(url)
+
     def fill_epbm(self, kode_matkul=None):
         ''' Method mengisi epbm '''
         if kode_matkul is None:
@@ -143,8 +148,8 @@ class Robot:
     def _construct_login_data(self):
         ''' Method untuk membangun data login '''
         if self.soup is not None:
-            token_tag = self.soup.select(
-                'input[name="__RequestVerificationToken"]')[0]['value']
+            token_tag = self.soup.select_one(
+                'input[name="__RequestVerificationToken"]')['value']
             d = {}
             for input_tag in self.soup.find_all('input'):
                 if input_tag['name'] == '__RequestVerificationToken':
@@ -163,6 +168,9 @@ class Robot:
 
     def _construct_epbm_data(self):
         krsid = self.soup.select_one('input[name="KRSID"]')
+        pengaturan_jadwal_sistem = self.soup.select_one(
+            'input[name="PengaturanJadwalSistemID"]')
+
         hitung_p_mk = self.soup.select_one('input[name^="HitungPertanyaanMK"]')
         hitung_p_dosen = self.soup.select(
             'input[name^="HitungPertanyaanDosen"]')
@@ -171,7 +179,8 @@ class Robot:
         list_id_dosen = self.soup.select('input[name^="PengajarMKID"]')
 
         data = {
-            krsid['name']: krsid['value']
+            krsid['name']: krsid['value'],
+            pengaturan_jadwal_sistem['name']: pengaturan_jadwal_sistem['value']
         }
 
         for i in range(1, int(hitung_p_mk['value']) + 1):

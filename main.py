@@ -15,6 +15,7 @@ def autoEPBM(username=None, password=None):
     robot.login(method='POST_LOGIN')
     robot.sidebar()
     robot.goto_page(page_name='EPBM')
+    robot.find_and_click_epbm_button()
     for epbm in robot.get_list_epbm().keys():
         robot.fill_epbm(epbm)
 
